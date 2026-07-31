@@ -23,8 +23,18 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # Read raw new data - no engineered columns needed/expected here.
-        input_df = pd.read_excel("healthcare_test.xlsx")
+        if "file" not in request.files:
+            return jsonify({
+                "error": "No file uploaded"
+            }), 400
+
+        file = request.files["file"]
+
+        if file.filename == "":
+            return jsonify({
+                "error": "No file selected"
+            }), 400
+        input_df = pd.read_excel(file)
         # input_df = pd.read_csv("healthcare_dataset.csv")
         # NOTE: no manual feature_engineering() call. The pipeline's first
         # step (BillingFeatureEngineer, loaded from pipeline.pkl) applies
