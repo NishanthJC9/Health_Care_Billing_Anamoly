@@ -55,14 +55,12 @@ def predict():
         output_df["anomaly_score"] = anomaly_scores
         output_df["is_flagged"] = predictions == -1
 
-        output_file = "prediction_output.xlsx"
-        output_df.to_excel(output_file, index=False)
 
         return jsonify({
             "message": "Prediction completed successfully.",
             "total_records": len(output_df),
             "anomalies_detected": int((predictions == -1).sum()),
-            "output_file": output_file,
+            "results": output_df.to_dict(orient="records"),
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
