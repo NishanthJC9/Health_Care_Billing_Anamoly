@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,send_file
+from io import BytesIO
 import pandas as pd
 import joblib
 
@@ -55,13 +56,29 @@ def predict():
         output_df["anomaly_score"] = anomaly_scores
         output_df["is_flagged"] = predictions == -1
 
+        output = BytesIO()
 
-        return jsonify({
-            "message": "Prediction completed successfully.",
-            "total_records": len(output_df),
-            "anomalies_detected": int((predictions == -1).sum()),
-            "results": output_df.to_dict(orient="records"),
-        })
+        output_df.to_excel(
+            output,
+            index=False,
+            engine="openpyxl"
+        )
+        
+        output.seek(0)
+        
+        response = send_file(
+            output,
+            as_attachment=True,
+            download_name="prediction_output.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        
+        response.headers["X-Message"] = "Prediction completed successfully."
+        response.headers["X-Total-Records"] = str(len(output_df))
+        response.headers["X-Anomalies-Detected"] = str((predictions == -1).sum())
+        
+        return response
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
